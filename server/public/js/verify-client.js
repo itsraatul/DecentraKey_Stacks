@@ -1,222 +1,201 @@
 // verify-client.js
-// Auto-connect Leather, discover owned license IDs by wallet, confirm on-chain owner,
-// then hydrate with off-chain details from /api/licenses/lookup.
-import { hexToCV, cvToJSON, uintCV, serializeCV } from 'https://esm.sh/@stacks/transactions@7.1.0';
-// /public/js/verify.js
+// Connect Leather → list owned license IDs → only verify when user clicks.
+// On verify: open a popup with success info (fallback to inline panel if popups blocked).
 
-const root = document.body;
-const CONTRACT_ADDRESS = root.dataset.contractAddress || '';
-const CONTRACT_NAME    = root.dataset.contractName || '';
-const HIRO             = root.dataset.hiroApi || 'https://api.testnet.hiro.so';
+const body = document.body;
+const CONTRACT_ADDRESS = body.dataset.contractAddress;
+const CONTRACT_NAME    = body.dataset.contractName;
+const HIRO             = body.dataset.hiroApi || 'https://api.testnet.hiro.so';
 
-const scanBtn     = document.getElementById('scan-btn');
-const scanStatus  = document.getElementById('scan-status');
-const detectedWrap= document.getElementById('detected-wrap');
-const detectedList= document.getElementById('detected-list');
+const btnConnect = document.getElementById('connect');
+const addrEl     = document.getElementById('connected-addr');
+const statusEl   = document.getElementById('status');
 
-const resultWrap  = document.getElementById('result-wrap');
-const goodBox     = document.getElementById('result-good');
-const badBox      = document.getElementById('result-bad');
-const badReason   = document.getElementById('bad-reason');
+const scanBox  = document.getElementById('scan-box');
+const scanNote = document.getElementById('scan-note');
+const listEl   = document.getElementById('licenses');
+const noneEl   = document.getElementById('none');
 
-const vSoftware   = document.getElementById('v-software');
-const vId         = document.getElementById('v-id');
-const vDuration   = document.getElementById('v-duration');
-const vRedeemed   = document.getElementById('v-redeemed');
+// Inline success panel (used if popup blocked)
+const successBox = document.getElementById('success');
+const sName      = document.getElementById('s-name');
+const sId        = document.getElementById('s-id');
+const sDays      = document.getElementById('s-days');
+const sRedeemed  = document.getElementById('s-redeemed');
 
-function show(el){ el.classList.remove('hidden'); }
-function hide(el){ el.classList.add('hidden'); }
-
-function uintToClarityHex(u) {
-  const n = BigInt(u);
-  const bytes = new Uint8Array(17);
-  bytes[0] = 0x01;
-  for (let i = 16; i >= 1; i--) {
-    bytes[i] = Number((n >> BigInt(8 * (16 - i))) & 0xffn);
-  }
-  return '0x' + Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+function msg(type, text) {
+  statusEl.className = 'p-3 rounded text-sm';
+  const map = {
+    ok:   ['bg-green-100','text-green-800','border','border-green-200'],
+    warn: ['bg-yellow-100','text-yellow-800','border','border-yellow-200'],
+    err:  ['bg-red-100','text-red-800','border','border-red-200'],
+    info: ['bg-blue-100','text-blue-800','border','border-blue-200'],
+  };
+  statusEl.classList.add(...(map[type] || map.info));
+  statusEl.textContent = text;
+  statusEl.classList.remove('hidden');
 }
+function hideMsg(){ statusEl.classList.add('hidden'); }
 
-async function hiroReadOnly(fn, argsHex = []) {
-  const url = `${HIRO}/v2/contracts/call-read/${CONTRACT_ADDRESS}/${CONTRACT_NAME}/${fn}`;
-  const body = { sender: CONTRACT_ADDRESS, arguments: argsHex };
-  const res  = await fetch(url, { method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(body) });
+// -------- Chain helpers --------
+function assetIdent() {
+  return `${CONTRACT_ADDRESS}.${CONTRACT_NAME}::decentrakey-license`;
+}
+async function listHoldingsFor(addr) {
+  const url = `${HIRO}/extended/v1/tokens/nft/holdings?principal=${addr}`
+            + `&asset_identifiers=${encodeURIComponent(assetIdent())}&limit=50`;
+  const res = await fetch(url);
   const json = await res.json().catch(()=> ({}));
-  return { ok: res.ok, status: res.status, json };
-}
-
-async function getWalletAddress() {
-  // Leather API variations
-  try {
-    const r = await window.LeatherProvider.request('getAddresses');
-    const a = r?.result?.addresses || r?.addresses || [];
-    const stx = a.find(x => (x.address||'').startsWith('ST') || (x.address||'').startsWith('SP'));
-    return stx?.address || '';
-  } catch {
-    try {
-      const r = await window.LeatherProvider.request('stx_getAddresses', null);
-      const a = r?.result?.addresses || [];
-      const stx = a.find(x => (x.address||'').startsWith('ST') || (x.address||'').startsWith('SP'));
-      return stx?.address || '';
-    } catch { return ''; }
+  const items = Array.isArray(json?.results) ? json.results : [];
+  const ids = [];
+  for (const it of items) {
+    const hex = it?.value?.hex; // 0x01 + 16B uint
+    if (!hex || !hex.startsWith('0x01') || hex.length < 2 + 2 + 32) continue;
+    const uintBe = hex.slice(-32); // last 16 bytes
+    ids.push(Number(BigInt('0x' + uintBe)));
   }
+  return [...new Set(ids)].sort((a,b)=>b-a);
 }
 
-function renderLicenseCard(id) {
-  const card = document.createElement('div');
-  card.className = 'p-4 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-between gap-4';
-  card.innerHTML = `
-    <div>
-      <p class="text-sm text-gray-500">License</p>
-      <p class="font-semibold text-gray-900">#${id}</p>
-      <p class="text-xs text-gray-500 mt-1">Software: <span class="font-mono">Unknown</span> • Duration: <span>? days</span></p>
-    </div>
-    <button class="verify-btn px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-      data-id="${id}">Verify</button>
+// -------- UI render --------
+function addRow({ id, softwareName, durationDays, redeemedAt }) {
+  const row = document.createElement('div');
+  row.className = 'flex items-center justify-between bg-gray-50 rounded p-3';
+
+  const left = document.createElement('div');
+  left.innerHTML = `
+    <div class="text-sm font-semibold text-gray-900">License #${id}</div>
+    <div class="text-xs text-gray-600">${softwareName || 'Unknown software'} • ${durationDays ?? '?'} days</div>
+    ${redeemedAt ? `<div class="text-xs text-gray-500">Redeemed: ${new Date(redeemedAt).toLocaleString()}</div>` : ''}
   `;
-  return card;
+
+  const btn = document.createElement('button');
+  btn.textContent = 'Verify';
+  btn.className = 'px-3 py-1.5 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-700';
+  btn.onclick = () => showSuccessPopup({ id, softwareName, durationDays, redeemedAt });
+
+  row.appendChild(left);
+  row.appendChild(btn);
+  listEl.appendChild(row);
 }
 
-function setResultSuccess({ id, software = 'Unknown software', duration = '—', redeemedAt = '—' }) {
-  vSoftware.textContent = software;
-  vId.textContent       = id;
-  vDuration.textContent = duration;
-  vRedeemed.textContent = redeemedAt;
-
-  show(resultWrap);
-  show(goodBox); hide(badBox);
+function showSuccessInline({ id, softwareName, durationDays, redeemedAt }) {
+  sName.textContent     = softwareName || 'Unknown software';
+  sId.textContent       = String(id);
+  sDays.textContent     = (durationDays != null ? `${durationDays} days` : '—');
+  sRedeemed.textContent = redeemedAt ? new Date(redeemedAt).toLocaleString() : '—';
+  successBox.classList.remove('hidden');
+  window.scrollTo({ top: successBox.offsetTop - 20, behavior: 'smooth' });
 }
 
-function setResultFailure(reason) {
-  badReason.textContent = reason || 'Ownership check failed.';
-  show(resultWrap);
-  show(badBox); hide(goodBox);
+function showSuccessPopup(details) {
+  // Try a popup window first
+  const w = window.open('', 'decentrakey-verify', 'width=520,height=640');
+  const html = `
+    <!doctype html><html><head>
+      <meta charset="utf-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+      <title>License verified</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+      <style>
+        body { font-family: Inter, system-ui, sans-serif; margin:0; background:#0f172a; color:#e2e8f0; }
+        .card { max-width: 560px; margin: 32px auto; padding: 24px; background:#0b1220;
+                border:1px solid #1e293b; border-radius:16px; }
+        .ok { display:flex; align-items:center; gap:10px; color:#34d399; font-weight:800; font-size:18px; }
+        dl { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:16px; }
+        dt { color:#94a3b8; font-size:12px; }
+        dd { color:#e2e8f0; font-weight:600; font-size:14px; }
+        .foot { margin-top:16px; font-size:11px; color:#94a3b8; }
+        .badge {background:#052e1e;color:#34d399;border:1px solid #0e4a2e;padding:2px 8px;border-radius:999px;font-size:11px;}
+      </style>
+    </head><body>
+      <div class="card">
+        <div class="ok">✔ Software verified — welcome aboard! <span class="badge">Stacks Testnet</span></div>
+        <dl>
+          <div><dt>Software</dt><dd>${(details.softwareName || 'Unknown software')}</dd></div>
+          <div><dt>License ID</dt><dd>${String(details.id)}</dd></div>
+          <div><dt>Duration</dt><dd>${details.durationDays != null ? `${details.durationDays} days` : '—'}</dd></div>
+          <div><dt>Redeemed at</dt><dd>${details.redeemedAt ? new Date(details.redeemedAt).toLocaleString() : '—'}</dd></div>
+        </dl>
+        <div class="foot">Tip: Keep this window as proof, or take a screenshot for your records.</div>
+      </div>
+    </body></html>
+  `;
+
+  if (w) {
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  } else {
+    // Popup blocked → show inline
+    showSuccessInline(details);
+  }
 }
 
-async function handleScan() {
-  hide(resultWrap); // clear previous result
-  detectedList.innerHTML = '';
-  hide(detectedWrap);
-
-  if (!window.LeatherProvider) {
-    scanStatus.textContent = 'Leather wallet not detected.';
-    return;
-  }
-
-  scanBtn.disabled = true;
-  scanStatus.textContent = 'Connecting wallet…';
-
-  const addr = await getWalletAddress();
-  if (!addr) {
-    scanStatus.textContent = 'Could not get a STX address from wallet.';
-    scanBtn.disabled = false;
-    return;
-  }
-
-  scanStatus.textContent = `Wallet: ${addr.slice(0,6)}…${addr.slice(-4)} — scanning…`;
-
-  // Try a super simple heuristic: look at last token id, then probe a small window backwards.
-  const rLast = await hiroReadOnly('get-last-token-id', []);
-  const lastOk = rLast.ok && typeof rLast.json?.result === 'string';
-  let last = 0;
-  if (lastOk) {
-    // clarity uint hex -> parse
-    // format: 0x01 + 16 bytes; read as bigint
-    const hex = rLast.json.result.slice(2);
-    const bytes = new Uint8Array(hex.match(/../g).map(h=>parseInt(h,16)));
-    let n = 0n;
-    for (let i=1;i<bytes.length;i++) n = (n<<8n) + BigInt(bytes[i]);
-    last = Number(n);
-  }
-
-  const candidates = [];
-  if (last > 0) {
-    for (let i = last; i > Math.max(0, last - 25); i--) candidates.push(i); // recent 25
-  }
-
-  if (candidates.length === 0) {
-    scanStatus.textContent = 'No licenses detected.';
-    scanBtn.disabled = false;
-    return;
-  }
-
-  // probe each candidate: get-owner(id) and match addr
-  const owned = [];
-  for (const id of candidates) {
-    const ownerRes = await hiroReadOnly('get-owner', [uintToClarityHex(id)]);
-    const raw = ownerRes?.json?.result || '';
-    // expect (some (principal 'ST…')) or (none)
-    if (typeof raw === 'string' && raw.startsWith('0x')) {
-      // very light parse: just check if hex contains ASCII of your addr
-      const text = raw.toLowerCase();
-      const needle = new TextEncoder().encode(addr);
-      const hexNeedle = Array.from(needle).map(b=>b.toString(16).padStart(2,'0')).join('');
-      if (text.includes(hexNeedle)) owned.push(id);
-    }
-  }
-
-  if (owned.length === 0) {
-    scanStatus.textContent = 'No licenses owned by this wallet were found in recent mints.';
-    scanBtn.disabled = false;
-    return;
-  }
-
-  scanStatus.textContent = `Found ${owned.length} license(s).`;
-  show(detectedWrap);
-  for (const id of owned) detectedList.appendChild(renderLicenseCard(id));
-  scanBtn.disabled = false;
-}
-
-// click -> verify a single license id
-async function onVerifyClick(e) {
-  const btn = e.target.closest('.verify-btn');
-  if (!btn) return;
-  const id = Number(btn.dataset.id || '0');
-  if (!id) return;
-
-  btn.disabled = true;
-  const original = btn.textContent;
-  btn.textContent = 'Verifying…';
-
+// -------- Data hydrate from your backend (optional) --------
+async function fetchMetadata(id) {
   try {
-    // 1) ensure current wallet still matches on-chain owner (authoritative)
-    const addr = await getWalletAddress();
-    if (!addr) {
-      setResultFailure('Could not read wallet address.');
-      btn.disabled = false; btn.textContent = original;
-      return;
-    }
+    const r = await fetch(`/api/licenses/lookup?id=${encodeURIComponent(id)}`);
+    if (!r.ok) return {};
+    return await r.json();
+  } catch { return {}; }
+}
 
-    const ownerRes = await hiroReadOnly('get-owner', [uintToClarityHex(id)]);
-    const hex = ownerRes?.json?.result || '';
-    if (typeof hex !== 'string' || !hex.startsWith('0x')) {
-      setResultFailure('Unexpected owner response.');
-      btn.disabled = false; btn.textContent = original;
-      return;
-    }
+// -------- Flow --------
+async function discoverFor(addr) {
+  hideMsg();
+  successBox.classList.add('hidden'); // hide any previous success
+  scanBox.classList.remove('hidden');
+  listEl.innerHTML = '';
+  noneEl.classList.add('hidden');
+  scanNote.textContent = 'Looking up your NFT holdings…';
 
-    // naive contains check like in scan
-    const needle = Array.from(new TextEncoder().encode(addr)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    if (!hex.toLowerCase().includes(needle)) {
-      setResultFailure('This wallet is not the owner of the selected license.');
-      btn.disabled = false; btn.textContent = original;
-      return;
-    }
+  const ids = await listHoldingsFor(addr);
 
-    // 2) (optional) fetch metadata if your contract has it
-    // fallback placeholders so UI doesn’t break
-    const meta = { software: 'Unknown software', duration: '—', redeemedAt: '—' };
+  if (!ids.length) {
+    noneEl.classList.remove('hidden');
+    scanNote.textContent = 'No licenses found.';
+    msg('warn', 'No licenses detected for this wallet.');
+    return;
+  }
 
-    setResultSuccess({ id, ...meta });
-  } catch (err) {
-    console.warn('verify error:', err);
-    setResultFailure('Verification failed due to a network or parsing error.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = original;
+  scanNote.textContent = `Found ${ids.length} license${ids.length>1?'s':''}. Loading details…`;
+  for (const id of ids) {
+    const meta = await fetchMetadata(id); // optional enrichment
+    addRow({
+      id,
+      softwareName: meta.softwareName,
+      durationDays: meta.licenseDurationDays,
+      redeemedAt:   meta.redeemedAt
+    });
+  }
+  msg('ok', 'Licenses listed. Click “Verify” on one to confirm.');
+}
+
+async function connect() {
+  if (!window.LeatherProvider) {
+    msg('warn','Leather wallet not detected. Please install/enable it and reload.');
+    return;
+  }
+  try {
+    msg('info', 'Connecting wallet…');
+    const res = await window.LeatherProvider.request('getAddresses');
+    const arr = res?.result?.addresses || res?.addresses || [];
+    const stx = arr.find(a => (a.address||'').startsWith('ST') || (a.address||'').startsWith('SP'));
+    if (!stx?.address) throw new Error('No STX address in wallet');
+    addrEl.textContent = `Connected: ${stx.address}`;
+    msg('ok', 'Wallet connected. Scanning…');
+    await discoverFor(stx.address);
+  } catch (e) {
+    console.error(e);
+    msg('err','Could not connect to Leather.');
   }
 }
 
-// wire up
-scanBtn?.addEventListener('click', handleScan);
-detectedList?.addEventListener('click', onVerifyClick);
+// Hook up button; no auto-connect, no auto-verify
+btnConnect?.addEventListener('click', (e) => {
+  e.preventDefault();
+  connect();
+});

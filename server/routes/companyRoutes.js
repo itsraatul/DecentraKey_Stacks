@@ -42,12 +42,13 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+
 router.get('/verify', async (req, res) => {
   return res.render('verify-license', {
+    title: 'Verify License',   // 👈 add this line
     contractAddress: CONTRACT_ADDRESS || '',
     contractName: CONTRACT_NAME || '',
     hiroApi: process.env.HIRO_API || 'https://api.testnet.hiro.so',
-
   });
 });
 

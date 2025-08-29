@@ -1,6 +1,5 @@
 // /server/public/js/claim.js
-// Minimal, loud, step-by-step wallet caller with read-only prechecks.
-import { uintCV, cvToHex, hexToCV, cvToJSON } from 'https://esm.sh/@stacks/transactions@7.1.0';
+import { uintCV, cvToHex, hexToCV, cvToJSON } from 'https://esm.sh/@stacks/transactions@7.1.0'; //only this libraty works properly for 
 
 const btn       = document.getElementById('claim-button');
 const statusEl  = document.getElementById('status-message');
@@ -34,7 +33,6 @@ const claimToken      = el?.dataset.claimToken || '';
 
 const HIRO = 'https://api.testnet.hiro.so';
 
-// Build Clarity hex for a uint (0x01 + 16-byte big-endian)
 function clarityUintHex(n){
   const id = BigInt(n);
   const bytes = new Uint8Array(17);
@@ -60,7 +58,6 @@ async function ro(fn, argsHex = []) {
 }
 
 async function getWalletAddress(){
-  // Attempt modern, then legacy
   try {
     const r = await window.LeatherProvider.request('getAddresses');
     log('getAddresses:', r);
@@ -107,24 +104,19 @@ function preflight(){
 
 async function callRedeemStrict() {
   // prepare arg in 3 encodings
-  const objArgNum = { type: 'uint', value: voucherId };          // value as NUMBER
-  const objArgStr = { type: 'uint', value: String(voucherId) };  // value as STRING
+  const objArgNum = { type: 'uint', value: voucherId };       
+  const objArgStr = { type: 'uint', value: String(voucherId) };  
 
-  // hex clarity value (with and without 0x)
-  /*const bytes = serializeCV(uintCV(voucherId));
-  const hex = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
-  const hexWith0x = '0x' + hex;
-  const hexNo0x   = hex;*/
 
-const hexWith0x = cvToHex(uintCV(voucherId));      // e.g. "0x01...."
+const hexWith0x = cvToHex(uintCV(voucherId));     
 const hexNo0x   = hexWith0x.replace(/^0x/, '');
   
-  // try both key names and both postConditionMode encodings
+
   const SHAPES = [
     { label: 'split',  base: { contractAddress, contractName, functionName: 'redeem-voucher', postConditions: [], sponsored: false, appDetails: { name:'DecentraKey', icon:'/favicon.ico' } } },
     { label: 'string', base: { contract: `${contractAddress}.${contractName}`, functionName: 'redeem-voucher', postConditions: [], sponsored: false, appDetails: { name:'DecentraKey', icon:'/favicon.ico' } } },
   ];
-  const ARG_KEYS   = ['functionArgs','arguments'];           // wallets differ
+  const ARG_KEYS   = ['functionArgs','arguments'];          
   const ARG_VARIANTS = [
     { args:[objArgNum], label:'object(value number)' },
     { args:[objArgStr], label:'object(value string)' },
@@ -132,13 +124,13 @@ const hexNo0x   = hexWith0x.replace(/^0x/, '');
     { args:[hexNo0x],   label:'hex no0x' },
   ];
   const PCM = [
-    { key:'postConditionMode', val: 1,      note:'pcm=1' },          // 1 = deny
+    { key:'postConditionMode', val: 1,      note:'pcm=1' },          
     { key:'postConditionMode', val: 'deny', note:"pcm='deny'" },
   ];
   const NET = [
-    {},                                     // no network (wallet decides)
-    { network: 'testnet' },                 // simple string
-    { network: { name: 'testnet' } },       // object form
+    {},                                    
+    { network: 'testnet' },                
+    { network: { name: 'testnet' } },      
   ];
 
   let methodName = 'stx_callContract';

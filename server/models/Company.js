@@ -1,7 +1,5 @@
-// server/models/Company.js
-
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database'); // We will create this file next
+const sequelize = require('../database'); 
 
 const Company = sequelize.define('Company', {
   // A unique ID for each company
@@ -19,7 +17,7 @@ const Company = sequelize.define('Company', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true, // Each email must be unique
+    unique: true, 
   },
   // The company's hashed password for login
   password: {
@@ -30,12 +28,12 @@ const Company = sequelize.define('Company', {
   stacksWalletAddress: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true, // Each wallet address must be unique
+    unique: true, 
   },
   // The approval status, controlled by the admin
   status: {
     type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-    defaultValue: 'pending', // New companies are pending by default
+    defaultValue: 'pending', 
     allowNull: false,
   },
 });

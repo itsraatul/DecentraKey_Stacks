@@ -124,6 +124,29 @@ app.get('/dummy-software', (req, res) => {
 app.use('/admin', adminRoutes);
 app.use('/company', companyRoutes);
 
+app.get('/api/licenses/lookup', async (req, res) => {
+  try {
+    const id = parseInt(req.query.id, 10);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ ok: false, error: 'Invalid id' });
+    }
+
+    const lic = await License.findOne({ where: { voucherId: id } });
+    if (!lic) return res.json({}); // frontend will fallback to "Unknown"
+
+    return res.json({
+      softwareName: lic.softwareName,
+      licenseDurationDays: lic.licenseDurationDays,
+      redeemedAt: lic.redeemedAt,
+      customerName: lic.customerName,
+      customerEmail: lic.customerEmail,
+    });
+  } catch (e) {
+    console.error('lookup error', e);
+    return res.status(500).json({ ok: false, error: 'Server error' });
+  }
+});
+
 /* -------------------- Server start -------------------- */
 async function startServer() {
   try {

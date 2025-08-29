@@ -47,9 +47,9 @@ function makeTestnet() {
     throw new Error(JSON.stringify(res, null, 2));
   }
   const txid = typeof res === 'string' ? res : res.txid;
-  console.log('✅ Authorized issuer. TXID:', txid);
-  console.log('🔗 Explorer:', `https://explorer.stacks.co/txid/${txid}?chain=testnet`);
+  console.log(' Authorized issuer. TXID:', txid);
+  console.log(' Explorer:', `https://explorer.stacks.co/txid/${txid}?chain=testnet`);
 })().catch(err => {
-  console.error('❌ Authorize failed:', err?.message || err);
+  console.error(' Authorize failed:', err?.message || err);
   process.exit(1);
 });
