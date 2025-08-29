@@ -73,10 +73,29 @@ DecentraKey is a blockchain-powered software key licensing platform. It turns so
 👨‍💻 Team Members
 * Arunangshu Raatul
 
-
-
-📸 Screenshots / 🎥 Demo
-
+  # The work flow:
 <img width="1266" height="663" alt="image" src="https://github.com/user-attachments/assets/a1fd0ef4-46e9-4988-ad39-f0743e397578" />
 
-* https://drive.google.com/file/d/11eP5G2Hu7PgI6777WAj0HCIHT5wEY3VV/view?usp=drive_link
+# The Smart Contract Deployment:
+<img width="1475" height="725" alt="image" src="https://github.com/user-attachments/assets/dccd662a-a363-455f-b7a7-921ea209bd91" />
+
+# Successful Function Call:
+ <img width="1558" height="707" alt="image" src="https://github.com/user-attachments/assets/d60013c2-2e18-4a6a-8579-61da5d88e415" />
+
+# The Landing Page:
+  <img width="1872" height="840" alt="image" src="https://github.com/user-attachments/assets/5165c6d0-1b4c-4587-b2f0-9f9f03381ba3" />
+
+# Fetching the data from the Blockchain
+<img width="1250" height="510" alt="image" src="https://github.com/user-attachments/assets/321ff1d1-d939-4082-a274-e2e4240e0609" />
+
+# Minting NFT
+<img width="441" height="183" alt="image" src="https://github.com/user-attachments/assets/1a76b0ef-d7a3-42b0-9044-ee13e9bfc4f6" />
+
+# The The Proper Wallet Integration with Frontend:
+  <img width="472" height="940" alt="image" src="https://github.com/user-attachments/assets/8a40f8ce-0136-4843-9f1f-986fe7cab0e3" />
+
+  
+     
+      
+
+# Video: https://drive.google.com/file/d/11eP5G2Hu7PgI6777WAj0HCIHT5wEY3VV/view?usp=drive_link
