@@ -74,7 +74,7 @@ DecentraKey is a blockchain-powered software key licensing platform. It turns so
 * Arunangshu Raatul
 
   # The work flow:
-<img width="1266" height="663" alt="image" src="https://github.com/user-attachments/assets/a1fd0ef4-46e9-4988-ad39-f0743e397578" />
+<img width="1131" height="532" alt="image" src="https://github.com/user-attachments/assets/7496b108-5e47-498a-a899-a89a72324bf1" />
 
 # The Smart Contract Deployment:
 <img width="1475" height="725" alt="image" src="https://github.com/user-attachments/assets/dccd662a-a363-455f-b7a7-921ea209bd91" />
