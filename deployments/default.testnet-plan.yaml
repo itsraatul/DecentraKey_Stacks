@@ -1,0 +1,18 @@
+---
+id: 0
+name: Testnet deployment
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: decentrakey-mvp
+            expected-sender: ST2JVNDBYHEXN4THNQ2RFGG02JJZSSQM31MJVYWBR
+            cost: 27580
+            path: "contracts\\decentrakey-mvp.clar"
+            anchor-block-only: true
+            clarity-version: 1
+      epoch: "2.05"

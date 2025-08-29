@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title><%= title %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet" />
+  <style> body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; } </style>
+</head>
+<body class="bg-gray-50 text-gray-900"
+  data-contract-address="<%= (typeof contractAddress !== 'undefined' ? contractAddress : '') %>"
+  data-contract-name="<%= (typeof contractName !== 'undefined' ? contractName : '') %>"
+  data-hiro-api="<%= (typeof hiroApi !== 'undefined' ? hiroApi : 'https://api.testnet.hiro.so') %>">
+
+  <!-- Nav (minimal) -->
+  <header class="sticky top-0 z-30 bg-white/70 backdrop-blur border-b border-gray-100">
+    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="h-8 w-8 rounded-xl bg-indigo-600"></div>
+        <span class="font-extrabold text-lg tracking-tight text-indigo-700">DecentraKey</span>
+      </a>
+      <nav class="flex items-center gap-3">
+        <a href="/" class="text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100">Home</a>
+        <a href="/company/login" class="text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100">Company</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+    <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <h1 class="text-2xl font-bold">Verify my license</h1>
+      <p class="mt-2 text-gray-600">
+        Click “Scan my wallet” to detect licenses owned by your connected Leather wallet. Then press “Verify” on a license to confirm ownership on-chain.
+      </p>
+
+      <div class="mt-6 flex items-center gap-3">
+        <button id="scan-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50">
+          Scan my wallet
+        </button>
+        <span id="scan-status" class="text-sm text-gray-500"></span>
+      </div>
+    </section>
+
+    <section id="detected-wrap" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hidden">
+      <h2 class="text-lg font-semibold">Detected licenses</h2>
+      <p class="text-sm text-gray-500 mt-1">Licenses linked to your wallet. Click “Verify” to validate on-chain.</p>
+      <div id="detected-list" class="mt-5 grid sm:grid-cols-2 gap-4"></div>
+    </section>
+
+    <section id="result-wrap" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hidden">
+      <div id="result-good" class="hidden">
+        <div class="flex items-center gap-2 text-emerald-700">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          <h3 class="text-xl font-bold">Software verified — welcome aboard! 🎉</h3>
+        </div>
+        <dl class="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <dt class="text-gray-500">Software</dt>
+            <dd id="v-software" class="font-medium">—</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">License ID</dt>
+            <dd id="v-id" class="font-medium">—</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">Duration</dt>
+            <dd id="v-duration" class="font-medium">—</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">Redeemed at</dt>
+            <dd id="v-redeemed" class="font-medium">—</dd>
+          </div>
+        </dl>
+        <p class="mt-4 text-xs text-gray-500">Tip: bookmark this page to re-check your license later.</p>
+      </div>
+
+      <div id="result-bad" class="hidden">
+        <div class="flex items-center gap-2 text-red-700">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <h3 class="text-xl font-bold">Verification failed</h3>
+        </div>
+        <p id="bad-reason" class="mt-3 text-sm text-red-700"></p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/verify.js"></script>
+</body>
+</html>

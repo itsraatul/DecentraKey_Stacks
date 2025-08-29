@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= title %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* subtle radial bg */
+    .bg-spotlight:before{
+      content:""; position:fixed; inset:auto -20% -20% -20%;
+      height:60vh; z-index:-1;
+      background: radial-gradient(60% 60% at 50% 0%, rgba(79,70,229,.12), transparent 70%);
+      pointer-events:none;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 bg-spotlight"
+  data-contract-address="<%= (typeof contractAddress !== 'undefined' ? contractAddress : '') %>"
+  data-contract-name="<%= (typeof contractName !== 'undefined' ? contractName : '') %>"
+  data-hiro-api="<%= (typeof hiroApi !== 'undefined' ? hiroApi : '') %>">
+
+    <!-- Top Nav -->
+    <nav class="bg-white/90 backdrop-blur shadow-sm border-b border-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">DK</div>
+            <h1 class="text-2xl font-bold text-indigo-700">DecentraKey</h1>
+            <span class="ml-3 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Dashboard
+            </span>
+          </div>
+          <div class="flex items-center space-x-4">
+            <span class="text-sm font-medium text-gray-700">Welcome, <%= companyName %></span>
+            <form action="/company/logout" method="POST">
+              <button type="submit" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Logout
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- Create License Card -->
+      <div class="lg:col-span-1">
+        <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+          <div class="flex items-start justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <svg class="w-6 h-6 text-indigo-600" viewBox="0 0 24 24" fill="none"><path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="2"/><path d="M7 11h10M11 7v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Create New License
+            </h2>
+            <span class="text-[11px] px-2 py-1 bg-green-50 text-green-700 rounded border border-green-100">on-chain</span>
+          </div>
+
+          <!-- (unchanged form & fields) -->
+          <form action="/company/create-license" method="POST" class="space-y-4">
+            <div>
+              <label for="customerName" class="text-sm font-medium text-gray-700">Customer Name</label>
+              <input type="text" name="customerName" id="customerName" required class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+              <label for="customerEmail" class="text-sm font-medium text-gray-700">Customer Email</label>
+              <input type="email" name="customerEmail" id="customerEmail" required class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+              <label for="customerWalletAddress" class="text-sm font-medium text-gray-700">Customer Stacks Wallet</label>
+              <input type="text" name="customerWalletAddress" id="customerWalletAddress" required placeholder="e.g., ST2K..." class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+              <label for="softwareName" class="text-sm font-medium text-gray-700">Software Name</label>
+              <input type="text" name="softwareName" id="softwareName" required class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+              <label for="licenseDurationDays" class="text-sm font-medium text-gray-700">Duration (Days)</label>
+              <input type="number" name="licenseDurationDays" id="licenseDurationDays" required value="365" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300">
+              Generate Claim Link
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Licenses & Messages -->
+      <div class="lg:col-span-2">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">Generated Licenses</h2>
+          <div class="flex items-center gap-2 text-xs text-gray-500">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 border border-gray-200">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Testnet
+            </span>
+          </div>
+        </div>
+
+        <!-- Success (Claim Link) -->
+        <% if (typeof claimLink !== 'undefined' && claimLink) { %>
+          <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 p-4">
+            <p class="font-bold flex items-center gap-2">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              License Link Generated!
+            </p>
+            <p class="text-sm">Send this secure link to your customer:</p>
+            <div class="mt-2 flex items-center gap-2">
+              <input id="claimLinkInput" type="text" readonly value="<%= claimLink %>" class="flex-1 bg-white p-2 rounded-lg font-mono text-xs border border-blue-200">
+              <button id="copyClaimLink" class="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M9 9h9v12H9zM6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Copy
+              </button>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Error -->
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="mb-6 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4">
+            <p class="font-bold flex items-center gap-2">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M12 3l9 18H3L12 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Error
+            </p>
+            <p class="text-sm"><%= error %></p>
+          </div>
+        <% } %>
+
+        <!-- Table -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th class="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Software</th>
+                  <th class="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Voucher ID</th>
+                  <th class="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-100">
+                <% licenses.forEach(license => { %>
+                  <tr class="hover:bg-gray-50/60">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900"><%= license.customerName %></div>
+                      <div class="text-sm text-gray-500"><%= license.customerEmail %></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= license.softwareName %></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600"><%= license.voucherId %></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <% if (license.isClaimed) { %>
+                        <span class="px-3 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Claimed
+                        </span>
+                      <% } else { %>
+                        <span class="px-3 py-1 inline-flex items-center gap-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Not Claimed
+                        </span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- keep your existing script include -->
+    <script type="module" src="/js/company-create.js"></script>
+
+    <!-- tiny helper: copy claim link (non-breaking) -->
+    <script>
+      (function(){
+        const btn = document.getElementById('copyClaimLink');
+        const inp = document.getElementById('claimLinkInput');
+        if (!btn || !inp) return;
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(inp.value);
+            btn.textContent = 'Copied!';
+            setTimeout(()=> (btn.textContent='Copy'), 1200);
+          } catch {
+            inp.select(); document.execCommand('copy');
+            btn.textContent = 'Copied!';
+            setTimeout(()=> (btn.textContent='Copy'), 1200);
+          }
+        });
+      })();
+    </script>
+</body>
+</html>

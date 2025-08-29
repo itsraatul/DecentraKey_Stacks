@@ -1,0 +1,26 @@
+
+**/settings/Mainnet.toml
+**/settings/Testnet.toml
+.cache/**
+history.txt
+
+logs
+*.log
+npm-debug.log*
+coverage
+*.info
+costs-reports.json
+node_modules
+# Node modules
+node_modules/
+server/node_modules/
+
+# Environment variables (contains secret keys)
+server/.env
+
+# Clarinet settings (contains secret keys)
+settings/Testnet.toml
+settings/Mainnet.toml
+
+# Clarinet cache
+.cache/

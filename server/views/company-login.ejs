@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= title || 'Company Login — DecentraKey' %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico">
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Top bar -->
+  <header class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <a href="/" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back home
+    </a>
+    <a href="/company/register"
+       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow transition">
+      Register
+    </a>
+  </header>
+
+  <!-- Auth card -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6">
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+      <!-- Left: brand + copy -->
+      <div class="hidden md:block">
+        <div class="bg-white/60 backdrop-blur rounded-2xl p-8 border border-gray-200 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold">DK</div>
+            <h1 class="text-2xl font-bold text-gray-900">DecentraKey for Companies</h1>
+          </div>
+          <p class="text-gray-600 leading-relaxed">
+            Issue, manage, and track blockchain-backed software licenses in minutes.
+            Create claim links, monitor redemptions, and verify ownership on-chain.
+          </p>
+          <ul class="mt-4 space-y-2 text-sm text-gray-600">
+            <li>• One-click voucher creation</li>
+            <li>• On-chain redemption & verification</li>
+            <li>• Simple dashboard for your team</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right: form -->
+      <div>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+          <div class="mb-6 text-center">
+            <h2 class="text-2xl font-semibold text-gray-900">Company Login</h2>
+            <p class="text-gray-500 mt-1">Access your DecentraKey dashboard</p>
+          </div>
+
+          <% if (error) { %>
+            <div class="mb-5 rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
+              <%= error %>
+            </div>
+          <% } %>
+
+          <form class="space-y-5" action="/company/login" method="POST" novalidate>
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+              <input id="email" name="email" type="email" required
+                     class="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 shadow-sm placeholder-gray-400
+                            focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                     placeholder="you@company.com" />
+            </div>
+
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+              <input id="password" name="password" type="password" required
+                     class="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 shadow-sm placeholder-gray-400
+                            focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                     placeholder="••••••••" />
+            </div>
+
+            <div class="flex items-center justify-between">
+              <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input type="checkbox" name="remember" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                Remember me
+              </label>
+              <a href="#" class="text-sm text-indigo-600 hover:text-indigo-700">Forgot password?</a>
+            </div>
+
+            <button type="submit"
+                    class="w-full inline-flex justify-center items-center gap-2 rounded-lg bg-indigo-600 text-white font-medium
+                           px-4 py-3 shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+              Sign in
+            </button>
+          </form>
+
+          <p class="mt-6 text-center text-sm text-gray-600">
+            New to DecentraKey?
+            <a href="/company/register" class="font-medium text-indigo-600 hover:text-indigo-700">Create a company account</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-12 pb-8 text-center text-xs text-gray-400">
+    © <%= new Date().getFullYear() %> DecentraKey
+  </footer>
+</body>
+</html>
